@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# iHideck/geojson から取る国境（npm run boundaries）
+public/geojson/
+.DS_Store
