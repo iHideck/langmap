@@ -57,6 +57,22 @@ export function indexByCountry(languages: Language[]): Map<string, Language[]> {
   return index;
 }
 
+/** 言語の数が最も多い地域。同じ数なら order で先の地域。空なら null */
+export function dominantArea(languages: Language[], order: readonly string[]): string | null {
+  const counts = new Map<string, number>();
+  for (const language of languages) counts.set(language.area, (counts.get(language.area) ?? 0) + 1);
+  let best: string | null = null;
+  let most = 0;
+  for (const area of order) {
+    const n = counts.get(area) ?? 0;
+    if (n > most) {
+      best = area;
+      most = n;
+    }
+  }
+  return best;
+}
+
 export interface Filter {
   query: string;
   area: string | null;

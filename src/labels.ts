@@ -91,6 +91,42 @@ export const SCRIPTS: Record<string, Label> = {
   Tibt: { ja: "チベット文字", en: "Tibetan" },
 };
 
+/** 文字ごとの代表の字。文字の見本帳に出す */
+export const SCRIPT_GLYPHS: Record<string, string> = {
+  Latn: "Aa",
+  Cyrl: "Жж",
+  Arab: "ع",
+  Deva: "अ",
+  Hani: "漢",
+  Mymr: "မ",
+  Beng: "অ",
+  Hebr: "א",
+  Geor: "ა",
+  Ethi: "ሀ",
+  Knda: "ಕ",
+  Tibt: "ཀ",
+  Grek: "Ωω",
+  Taml: "த",
+  Thai: "ก",
+  Armn: "Աա",
+  Jpan: "あ",
+  Kore: "한",
+  Telu: "త",
+  Gujr: "ગ",
+  Mlym: "മ",
+  Guru: "ਗ",
+  Orya: "ଓ",
+  Sinh: "ස",
+  Khmr: "ក",
+  Laoo: "ກ",
+  Olck: "ᱚ",
+  Mtei: "ꯃ",
+  Thaa: "ދ",
+  Tale: "ᥖ",
+  Tfng: "ⵜ",
+  Nkoo: "ߒ",
+};
+
 export const LEVELS: Record<string, Label> = {
   beginner: { ja: "初級", en: "Beginner" },
   intermediate: { ja: "中級", en: "Intermediate" },
