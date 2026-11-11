@@ -134,6 +134,13 @@ const UI = {
   mapLabel: { ja: "{name} が話されている地域の地図", en: "Map of where {name} is spoken" },
   worldLabel: { ja: "国ごとの言語の数の世界地図", en: "World map of languages per country" },
   languages: { ja: "言語", en: "languages" },
+  zoomIn: { ja: "拡大", en: "Zoom in" },
+  zoomOut: { ja: "縮小", en: "Zoom out" },
+  zoomReset: { ja: "元の大きさに戻す", en: "Reset zoom" },
+  zoomHint: {
+    ja: "ホイール・ピンチ・ダブルクリックで拡大縮小、ドラッグで移動できます",
+    en: "Scroll, pinch or double-click to zoom; drag to move",
+  },
   theme: { ja: "表示の明るさを切り替える", en: "Toggle light or dark" },
   credit: {
     ja: "言語データ: languessr ／ 国境: iHideck/geojson（Made with Natural Earth）／ 州・省の境: Natural Earth",
