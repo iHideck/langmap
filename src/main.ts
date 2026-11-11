@@ -211,7 +211,7 @@ function renderHome(state: State, root: HTMLElement) {
       "div",
       { class: "hero-text" },
       h("h1", {}, "langmap"),
-      h("p", { class: "tagline" }, t(locale, "tagline", { n: data.languages.length })),
+      h("p", { class: "tagline" }, t(locale, "tagline")),
       h("ul", { class: "stats" }, ...stats.map(([n, text]) => h("li", {}, h("strong", {}, String(n)), h("span", {}, text)))),
     ),
     h("div", { class: "world" }, world),

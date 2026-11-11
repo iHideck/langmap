@@ -135,8 +135,8 @@ export const LEVELS: Record<string, Label> = {
 
 const UI = {
   tagline: {
-    ja: "世界の {n} の言語を、話されている地域の地図と一緒に",
-    en: "{n} of the world's languages, mapped where they are spoken",
+    ja: "世界の言語を、話されている地域の地図と一緒に",
+    en: "The world's languages, mapped where they are spoken",
   },
   search: { ja: "言語の名前で探す（日本語・英語・コード）", en: "Search by name or code" },
   all: { ja: "すべて", en: "All" },
