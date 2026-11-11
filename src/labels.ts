@@ -91,6 +91,42 @@ export const SCRIPTS: Record<string, Label> = {
   Tibt: { ja: "チベット文字", en: "Tibetan" },
 };
 
+/** 文字ごとの代表の字。文字の見本帳に出す */
+export const SCRIPT_GLYPHS: Record<string, string> = {
+  Latn: "Aa",
+  Cyrl: "Жж",
+  Arab: "ع",
+  Deva: "अ",
+  Hani: "漢",
+  Mymr: "မ",
+  Beng: "অ",
+  Hebr: "א",
+  Geor: "ა",
+  Ethi: "ሀ",
+  Knda: "ಕ",
+  Tibt: "ཀ",
+  Grek: "Ωω",
+  Taml: "த",
+  Thai: "ก",
+  Armn: "Աա",
+  Jpan: "あ",
+  Kore: "한",
+  Telu: "త",
+  Gujr: "ગ",
+  Mlym: "മ",
+  Guru: "ਗ",
+  Orya: "ଓ",
+  Sinh: "ස",
+  Khmr: "ក",
+  Laoo: "ກ",
+  Olck: "ᱚ",
+  Mtei: "ꯃ",
+  Thaa: "ދ",
+  Tale: "ᥖ",
+  Tfng: "ⵜ",
+  Nkoo: "ߒ",
+};
+
 export const LEVELS: Record<string, Label> = {
   beginner: { ja: "初級", en: "Beginner" },
   intermediate: { ja: "中級", en: "Intermediate" },
@@ -99,8 +135,8 @@ export const LEVELS: Record<string, Label> = {
 
 const UI = {
   tagline: {
-    ja: "世界の {n} の言語を、話されている地域の地図と一緒に",
-    en: "{n} of the world's languages, mapped where they are spoken",
+    ja: "世界の言語を、話されている地域の地図と一緒に",
+    en: "The world's languages, mapped where they are spoken",
   },
   search: { ja: "言語の名前で探す（日本語・英語・コード）", en: "Search by name or code" },
   all: { ja: "すべて", en: "All" },
@@ -113,6 +149,20 @@ const UI = {
     ja: "国を押すと、その国で話される言語に絞り込めます",
     en: "Tap a country to see the languages spoken there",
   },
+  legendNote: {
+    ja: "色は地域、濃いほど話される言語が多い",
+    en: "Colored by area; darker means more languages",
+  },
+  statScripts: { ja: "文字", en: "scripts" },
+  statFamilies: { ja: "語族・語派", en: "families" },
+  statCountries: { ja: "国と地域", en: "countries and regions" },
+  scriptsTitle: { ja: "文字から探す", en: "Browse by script" },
+  scriptsHint: {
+    ja: "字を押すと、その文字で書く言語に絞り込めます",
+    en: "Tap a script to see the languages written in it",
+  },
+  surprise: { ja: "おまかせ", en: "Surprise me" },
+  surpriseHint: { ja: "絞り込んだ言語から 1 つを開く", en: "Open a random language from this list" },
   noResults: { ja: "当てはまる言語がありません", en: "No languages match" },
   back: { ja: "← 一覧へ", en: "← All languages" },
   spokenIn: { ja: "話されている地域", en: "Where it is spoken" },

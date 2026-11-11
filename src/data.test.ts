@@ -1,7 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { EMPTY_FILTER, countriesOf, indexByCountry, matches, neighbors, type Language, type LanguageData } from "./data";
-import { AREAS, FAMILIES, LEVELS, SCRIPTS } from "./labels";
+import {
+  EMPTY_FILTER,
+  countriesOf,
+  dominantArea,
+  indexByCountry,
+  matches,
+  neighbors,
+  type Language,
+  type LanguageData,
+} from "./data";
+import { AREAS, AREA_ORDER, FAMILIES, LEVELS, SCRIPTS, SCRIPT_GLYPHS } from "./labels";
 
 const data = JSON.parse(readFileSync(new URL("../public/data/languages.json", import.meta.url), "utf8")) as LanguageData;
 const regions = JSON.parse(readFileSync(new URL("../public/data/regions.geojson", import.meta.url), "utf8")) as {
@@ -55,5 +64,35 @@ describe("絞り込み", () => {
     const near = neighbors(get("eu"), byCountry);
     expect(near.map((l) => l.code)).toContain("es");
     expect(near).not.toContain(get("eu"));
+  });
+});
+
+describe("dominantArea", () => {
+  it("言語の数が最も多い地域を返す", () => {
+    expect(dominantArea([get("sw"), get("fr"), get("de")], AREA_ORDER)).toBe("europe");
+    expect(dominantArea(indexByCountry(data.languages).get("IN") ?? [], AREA_ORDER)).toBe("south-asia");
+  });
+
+  it("同じ数なら、order で先の地域を返す", () => {
+    expect(dominantArea([get("sw"), get("fr")], AREA_ORDER)).toBe("europe");
+    expect(dominantArea([get("sw"), get("fr")], [...AREA_ORDER].reverse())).toBe("africa");
+  });
+
+  it("言語が無ければ null", () => {
+    expect(dominantArea([], AREA_ORDER)).toBeNull();
+  });
+});
+
+describe("SCRIPT_GLYPHS", () => {
+  it("データにある全ての文字に、代表の字がある", () => {
+    for (const script of new Set(data.languages.map((l) => l.script))) expect(SCRIPT_GLYPHS[script], script).toBeTruthy();
+  });
+
+  it("代表の字は、その文字で書かれている", () => {
+    // Jpan と Kore は Unicode の文字の名前ではないので、代表の字のかなとハングルで確かめる
+    const unicodeScript: Record<string, string> = { Jpan: "Hira", Kore: "Hang" };
+    for (const [script, glyph] of Object.entries(SCRIPT_GLYPHS)) {
+      expect(glyph, script).toMatch(new RegExp(`^\\p{Script=${unicodeScript[script] ?? script}}+$`, "u"));
+    }
   });
 });

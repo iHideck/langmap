@@ -5,6 +5,7 @@ import { confusables, markClues, type Segment } from "./clues";
 import {
   EMPTY_FILTER,
   countriesOf,
+  dominantArea,
   indexByCountry,
   matches,
   name,
@@ -15,7 +16,7 @@ import {
   type LanguageData,
 } from "./data";
 import { countriesFromTopology, regionsFromGeoJson, type Atlas } from "./geo";
-import { AREAS, AREA_ORDER, FAMILIES, LEVELS, SCRIPTS, label, t, type Locale } from "./labels";
+import { AREAS, AREA_ORDER, FAMILIES, LEVELS, SCRIPTS, SCRIPT_GLYPHS, label, t, type Locale } from "./labels";
 import { detailMap, drawMini, palette, worldMap } from "./map";
 
 const BASE = import.meta.env.BASE_URL;
@@ -105,6 +106,7 @@ function card(state: State, language: Language): HTMLElement {
   const { locale } = state;
   const canvas = h("canvas", { class: "mini", "aria-hidden": "true" });
   observeMini(state, canvas, language);
+  const specimen = language.examples?.[0];
   const a = h(
     "a",
     { class: "card", href: `#/${language.code}`, style: `--hl: var(--area-${language.area})` },
@@ -112,6 +114,8 @@ function card(state: State, language: Language): HTMLElement {
     h(
       "div",
       { class: "card-body" },
+      // 本文は長いので、リンクの名前に入れない
+      specimen && h("p", { class: "specimen", lang: language.code, dir: "auto", "aria-hidden": "true" }, specimen.text),
       h("div", { class: "card-head" }, h("h3", {}, name(language, locale)), h("span", { class: "code" }, language.code)),
       h("p", { class: "other" }, otherName(language, locale)),
       h("p", { class: "region" }, locale === "ja" ? language.region : language.regionEn),
@@ -162,31 +166,45 @@ function renderHome(state: State, root: HTMLElement) {
     }
   };
 
+  // 絞り込んだ一覧が見えるところまで送る（スマートフォンでは地図や文字の見本帳の下に隠れるため）
+  const revealList = () => {
+    const status = document.querySelector(".status");
+    if (status && status.getBoundingClientRect().top > window.innerHeight * 0.6) {
+      status.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const families = [...new Set(data.languages.map((l) => l.family))]
+    .map((f): [string, string] => [f, label(FAMILIES, f, locale)])
+    .sort((a, b) => a[1].localeCompare(b[1], locale));
+  const scripts = [...new Set(data.languages.map((l) => l.script))]
+    .map((s): [string, string] => [s, label(SCRIPTS, s, locale)])
+    .sort((a, b) => a[1].localeCompare(b[1], locale));
+
   // 世界地図
-  const visibleByCountry = indexByCountry(filtered);
   const filtering = state.filter.area || state.filter.family || state.filter.script || state.filter.query;
+  const shown = filtering ? indexByCountry(filtered) : state.byCountry;
   const world = worldMap(state.atlas, {
     label: t(locale, "worldLabel"),
     intensity: (code) => {
-      const n = (filtering ? visibleByCountry : state.byCountry).get(code)?.length ?? 0;
+      const n = shown.get(code)?.length ?? 0;
       return n === 0 ? 0 : 0.25 + 0.75 * Math.sqrt(n / max);
     },
-    title: (code) => {
-      const n = (filtering ? visibleByCountry : state.byCountry).get(code)?.length ?? 0;
-      return `${countryName(state, code) ?? code} — ${t(locale, "count", { n })}`;
-    },
+    color: (code) => `var(--area-${dominantArea(shown.get(code) ?? [], AREA_ORDER)})`,
+    title: (code) => `${countryName(state, code) ?? code} — ${t(locale, "count", { n: shown.get(code)?.length ?? 0 })}`,
     selected: state.filter.country,
     onSelect: (code) => {
       update({ country: state.filter.country === code ? null : code });
-      // 絞り込んだ一覧が見えるところまで送る（スマートフォンでは地図の下に隠れるため）
-      const status = document.querySelector(".status");
-      if (status && status.getBoundingClientRect().top > window.innerHeight * 0.6) {
-        status.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      revealList();
     },
   });
-  world.style.setProperty("--hl", state.filter.area ? `var(--area-${state.filter.area})` : "var(--accent)");
 
+  const stats: [number, string][] = [
+    [data.languages.length, t(locale, "languages")],
+    [scripts.length, t(locale, "statScripts")],
+    [families.length, t(locale, "statFamilies")],
+    [state.byCountry.size, t(locale, "statCountries")],
+  ];
   const hero = h(
     "section",
     { class: "hero" },
@@ -194,17 +212,62 @@ function renderHome(state: State, root: HTMLElement) {
       "div",
       { class: "hero-text" },
       h("h1", {}, "langmap"),
-      h("p", { class: "tagline" }, t(locale, "tagline", { n: data.languages.length })),
+      h("p", { class: "tagline" }, t(locale, "tagline")),
+      h("ul", { class: "stats" }, ...stats.map(([n, text]) => h("li", {}, h("strong", {}, String(n)), h("span", {}, text)))),
     ),
     h("div", { class: "world" }, world),
     h(
       "div",
       { class: "legend" },
-      h("span", {}, "1"),
-      h("span", { class: "ramp", style: `--hl: ${state.filter.area ? `var(--area-${state.filter.area})` : "var(--accent)"}` }),
-      h("span", {}, `${max} ${t(locale, "languages")}`),
+      h(
+        "ul",
+        { class: "legend-areas" },
+        ...AREA_ORDER.map((area) => h("li", { style: `--hl: var(--area-${area})` }, label(AREAS, area, locale))),
+      ),
+      h("span", {}, t(locale, "legendNote")),
       h("span", { class: "hint" }, t(locale, "mapHint")),
     ),
+  );
+
+  // 文字の見本帳。漢字・かな・ハングルは、言語によって字の形が変わるので lang を付ける
+  const glyphLang: Record<string, string> = { Hani: "zh", Jpan: "ja", Kore: "ko" };
+  const tiles = h(
+    "div",
+    { class: "script-tiles" },
+    ...scripts
+      .map(([script, text]) => ({ script, text, languages: data.languages.filter((l) => l.script === script) }))
+      .sort((a, b) => b.languages.length - a.languages.length || a.text.localeCompare(b.text, locale))
+      .map(({ script, text, languages }) => {
+        const pressed = state.filter.script === script;
+        const title = `${text} — ${t(locale, "count", { n: languages.length })}`;
+        const glyph = h("span", { class: "glyph", "aria-hidden": "true" }, SCRIPT_GLYPHS[script]);
+        if (glyphLang[script]) glyph.lang = glyphLang[script];
+        const tile = h(
+          "button",
+          {
+            class: "script-tile",
+            type: "button",
+            "aria-pressed": String(pressed),
+            "aria-label": title,
+            title,
+            style: `--hl: var(--area-${dominantArea(languages, AREA_ORDER)})`,
+          },
+          glyph,
+          h("span", { class: "script-name" }, text),
+          h("span", { class: "count" }, String(languages.length)),
+        );
+        tile.addEventListener("click", () => {
+          update({ script: pressed ? null : script });
+          revealList();
+        });
+        return tile;
+      }),
+  );
+  const scriptBook = h(
+    "section",
+    { class: "scripts" },
+    h("div", { class: "scripts-head" }, h("h2", {}, t(locale, "scriptsTitle")), h("span", {}, t(locale, "scriptsHint"))),
+    tiles,
   );
 
   // 絞り込み
@@ -226,13 +289,6 @@ function renderHome(state: State, root: HTMLElement) {
     ),
   );
 
-  const families = [...new Set(data.languages.map((l) => l.family))]
-    .map((f): [string, string] => [f, label(FAMILIES, f, locale)])
-    .sort((a, b) => a[1].localeCompare(b[1], locale));
-  const scripts = [...new Set(data.languages.map((l) => l.script))]
-    .map((s): [string, string] => [s, label(SCRIPTS, s, locale)])
-    .sort((a, b) => a[1].localeCompare(b[1], locale));
-
   const controls = h(
     "section",
     { class: "controls" },
@@ -246,6 +302,11 @@ function renderHome(state: State, root: HTMLElement) {
     ),
   );
 
+  const surprise = h("button", { class: "surprise", type: "button", title: t(locale, "surpriseHint") }, t(locale, "surprise"));
+  surprise.addEventListener("click", () => {
+    location.hash = `#/${filtered[Math.floor(Math.random() * filtered.length)].code}`;
+  });
+
   const country = state.filter.country;
   const status = h(
     "div",
@@ -255,6 +316,7 @@ function renderHome(state: State, root: HTMLElement) {
       : null,
     h("span", { class: "count" }, t(locale, "count", { n: filtered.length })),
     country ? chip(`× ${t(locale, "clearCountry")}`, false, () => update({ country: null })) : null,
+    filtered.length ? surprise : null,
   );
 
   // 言語の一覧（地域ごと）
@@ -274,7 +336,10 @@ function renderHome(state: State, root: HTMLElement) {
     );
   }
 
-  root.replaceChildren(hero, controls, status, list);
+  // 作り直すと横に送った見本帳が先頭に戻るので、前の位置を引き継ぐ
+  const tilesLeft = root.querySelector(".script-tiles")?.scrollLeft ?? 0;
+  root.replaceChildren(hero, scriptBook, controls, status, list);
+  tiles.scrollLeft = tilesLeft;
 }
 
 // ---- 言語のページ ----

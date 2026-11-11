@@ -323,12 +323,14 @@ export interface WorldOptions {
   label: string;
   /** 国ごとの値（0〜1）。塗りの濃さ */
   intensity: (code: string) => number;
+  /** 塗りの色（CSS の色。例: "var(--area-europe)"）。intensity が 0 より大きい国だけに使う */
+  color: (code: string) => string;
   title: (code: string) => string;
   selected: string | null;
   onSelect: (code: string) => void;
 }
 
-/** 一覧の上の世界地図。国ごとの言語の数で塗り分け、押すとその国で絞り込む */
+/** 一覧の上の世界地図。国ごとに色と言語の数の濃さで塗り分け、押すとその国で絞り込む */
 export function worldMap(atlas: Atlas, options: WorldOptions): SVGSVGElement {
   const width = 960;
   const height = 470;
@@ -355,6 +357,7 @@ export function worldMap(atlas: Atlas, options: WorldOptions): SVGSVGElement {
     if (value > 0) {
       p.classList.add("has-lang");
       p.style.setProperty("--v", value.toFixed(3));
+      p.style.setProperty("--hl", options.color(code));
       p.setAttribute("tabindex", "0");
       p.dataset.code = code;
       p.addEventListener("click", () => options.onSelect(code));
