@@ -127,6 +127,8 @@ const UI = {
     ja: "本文は Wikipedia の記事から抜粋したものです（CC BY-SA 4.0）。",
     en: "Excerpts from Wikipedia articles (CC BY-SA 4.0).",
   },
+  cluesMarked: { ja: "本文の例の中の目印に、色を付けています", en: "Clues are highlighted in the sample text" },
+  similar: { ja: "似ている言語との見分け方", en: "Telling it apart from similar languages" },
   countries: { ja: "国・地域", en: "Countries" },
   partOf: { ja: "一部", en: "part" },
   sameFamily: { ja: "同じ語族・語派の言語", en: "Same family" },
