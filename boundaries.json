@@ -1,0 +1,10 @@
+{
+  "_comment": "国境は iHideck/geojson の版を固定して読む。版を上げたら、npm run boundaries -- --update で sha256 を書き直す",
+  "repository": "iHideck/geojson",
+  "ref": "v0.3.0",
+  "files": {
+    "world/countries/110m.topojson": "4adc5cba48d750f419a895223e08765ef910de1889df00b131ee9e3269f102a5",
+    "world/countries/50m.topojson": "8906e42873e2deec0cce866373738366b562f24d4ed25c13415c0a89d86420c9",
+    "world/countries/metadata.json": "cf71cc09a4913d203d00d340052e9b6b7713f7d6990213e2f167ed4c5db94056"
+  }
+}
