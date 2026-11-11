@@ -719,8 +719,6 @@ a.chip:hover {
   font-size: 1.15rem;
   padding: 2px 12px;
   border-radius: 8px;
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--hl) 35%, transparent);
 }
 
 .examples,
@@ -753,6 +751,88 @@ a.chip:hover {
 .notice {
   font-size: 0.8rem;
   color: var(--muted);
+}
+
+/* 本文の中の目印と、コツの節の目印のチップを、同じ色にする */
+.clue,
+.clue-mark,
+.clues-note::before {
+  background: color-mix(in srgb, var(--hl) 22%, var(--surface));
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--hl) 75%, transparent);
+}
+
+/* 左右に余白を付けると、語の途中で区切った所に隙間ができる */
+.clue-mark {
+  color: inherit;
+}
+
+.tip .clues-note {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.clues-note::before {
+  content: "";
+  display: inline-block;
+  width: 1.6em;
+  height: 1.1em;
+  margin-inline-end: 6px;
+  vertical-align: -0.25em;
+  border-radius: 2px;
+}
+
+.similar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.similar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px 14px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--hl);
+  text-decoration: none;
+  transition: transform 0.15s;
+}
+
+.similar-card:hover {
+  transform: translateY(-2px);
+}
+
+.similar-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.similar-card .other {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.similar-tip {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.similar-sample {
+  margin: 0;
+  padding-inline-start: 10px;
+  border-inline-start: 2px solid color-mix(in srgb, var(--hl) 45%, transparent);
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ---- 下の帯 ---- */

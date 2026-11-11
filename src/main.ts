@@ -1,6 +1,7 @@
 import "./styles.css";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { Topology } from "topojson-specification";
+import { confusables, markClues, type Segment } from "./clues";
 import {
   EMPTY_FILTER,
   countriesOf,
@@ -288,6 +289,25 @@ function linkChips(state: State, languages: Language[]): HTMLElement {
   );
 }
 
+function segmentNodes(segments: Segment[]): (HTMLElement | string)[] {
+  return segments.map((s) => (s.hit ? h("mark", { class: "clue-mark" }, s.text) : s.text));
+}
+
+function similarCard(state: State, language: Language): HTMLElement {
+  const { locale } = state;
+  const tip = locale === "ja" ? language.tip : language.tipEn;
+  const sample = language.examples?.[0];
+  return h(
+    "a",
+    { class: "similar-card", href: `#/${language.code}`, style: `--hl: var(--area-${language.area})` },
+    h("h3", {}, name(language, locale), h("span", { class: "other" }, otherName(language, locale))),
+    tip ? h("p", { class: "similar-tip" }, tip) : null,
+    sample
+      ? h("p", { class: "similar-sample", lang: language.code, dir: "auto" }, ...segmentNodes(markClues(sample.text, language)))
+      : null,
+  );
+}
+
 function renderDetail(state: State, root: HTMLElement, language: Language) {
   const { locale } = state;
   const atlas = state.detailAtlas ?? state.atlas;
@@ -320,6 +340,7 @@ function renderDetail(state: State, root: HTMLElement, language: Language) {
   const next = order[(index + 1) % order.length];
   const family = order.filter((l) => l.family === language.family && l !== language);
   const near = neighbors(language, state.byCountry);
+  const similar = confusables(language, state.data.languages);
 
   const facts = h(
     "dl",
@@ -342,8 +363,8 @@ function renderDetail(state: State, root: HTMLElement, language: Language) {
     h(
       "figure",
       { class: "example", lang: language.code },
-      h("blockquote", {}, e.text),
-      h("figcaption", {}, h("a", { href: e.url, rel: "noopener", target: "_blank" }, e.title)),
+      h("blockquote", { dir: "auto" }, ...segmentNodes(markClues(e.text, language))),
+      h("figcaption", { dir: "auto" }, h("a", { href: e.url, rel: "noopener", target: "_blank" }, e.title)),
     ),
   );
 
@@ -385,7 +406,10 @@ function renderDetail(state: State, root: HTMLElement, language: Language) {
                 h("h2", {}, t(locale, "tip")),
                 h("p", {}, tip),
                 clues.length
-                  ? h("p", { class: "clues", lang: language.code }, ...clues.map((c) => h("span", { class: "clue" }, c)))
+                  ? h("p", { class: "clues", lang: language.code }, ...clues.map((c) => h("span", { class: "clue", dir: "auto" }, c)))
+                  : null,
+                examples.some((e) => e.querySelector(".clue-mark"))
+                  ? h("p", { class: "clues-note" }, t(locale, "cluesMarked"))
                   : null,
               )
             : null,
@@ -398,6 +422,14 @@ function renderDetail(state: State, root: HTMLElement, language: Language) {
             h("h2", {}, t(locale, "examples")),
             ...examples,
             h("p", { class: "notice" }, t(locale, "examplesNotice")),
+          )
+        : null,
+      similar.length
+        ? h(
+            "section",
+            { class: "related" },
+            h("h2", {}, t(locale, "similar")),
+            h("div", { class: "similar-grid" }, ...similar.map((l) => similarCard(state, l))),
           )
         : null,
       near.length ? h("section", { class: "related" }, h("h2", {}, t(locale, "neighbors")), linkChips(state, near)) : null,
