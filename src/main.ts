@@ -296,11 +296,14 @@ function renderDetail(state: State, root: HTMLElement, language: Language) {
     label: t(locale, "mapLabel", { name: name(language, locale) }),
     color,
     countryName: (code) => countryName(state, code),
+    zoomIn: t(locale, "zoomIn"),
+    zoomOut: t(locale, "zoomOut"),
+    zoomReset: t(locale, "zoomReset"),
   });
 
   const countries = countriesOf(language).map((code) => {
     const partial = !language.regions.includes(code);
-    const text = `${countryName(state, code) ?? code}${partial ? `（${t(locale, "partOf")}）` : ""}`;
+    const text = `${countryName(state, code) ?? code}${partial ? (locale === "ja" ? `（${t(locale, "partOf")}）` : ` (${t(locale, "partOf")})`) : ""}`;
     const a = h("a", { class: "chip", href: "#/" }, text);
     a.addEventListener("click", () => {
       state.filter = { ...EMPTY_FILTER, country: code };
@@ -370,7 +373,7 @@ function renderDetail(state: State, root: HTMLElement, language: Language) {
       h(
         "div",
         { class: "detail-grid" },
-        h("div", { class: "detail-map-wrap" }, map),
+        h("div", { class: "detail-map-wrap" }, map, h("p", { class: "zoom-hint" }, t(locale, "zoomHint"))),
         h(
           "div",
           { class: "detail-side" },
