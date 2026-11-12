@@ -360,6 +360,7 @@ export function worldMap(atlas: Atlas, options: WorldOptions): SVGSVGElement {
       p.style.setProperty("--hl", options.color(code));
       p.setAttribute("tabindex", "0");
       p.dataset.code = code;
+      p.dataset.key = `country:${code}`;
       p.addEventListener("click", () => options.onSelect(code));
       p.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
