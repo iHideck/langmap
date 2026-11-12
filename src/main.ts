@@ -130,15 +130,16 @@ function card(state: State, language: Language): HTMLElement {
   return a;
 }
 
-function chip(text: string, active: boolean, onClick: () => void, color?: string): HTMLButtonElement {
+function chip(text: string, active: boolean, onClick: () => void, color?: string, key?: string): HTMLButtonElement {
   const b = h("button", { class: `chip${active ? " active" : ""}`, type: "button", "aria-pressed": String(active) }, text);
+  if (key) b.dataset.key = key;
   if (color) b.style.setProperty("--hl", color);
   b.addEventListener("click", onClick);
   return b;
 }
 
-function select(options: [string, string][], value: string | null, allLabel: string, onChange: (v: string | null) => void) {
-  const s = h("select", {});
+function select(options: [string, string][], value: string | null, allLabel: string, key: string, onChange: (v: string | null) => void) {
+  const s = h("select", { "data-key": key });
   s.append(h("option", { value: "" }, allLabel));
   for (const [v, text] of options) {
     const o = h("option", { value: v }, text);
@@ -154,16 +155,21 @@ function renderHome(state: State, root: HTMLElement) {
   const filtered = data.languages.filter((l) => matches(l, state.filter));
   const max = Math.max(...[...state.byCountry.values()].map((l) => l.length));
 
-  const update = (patch: Partial<Filter>, keepFocus = false) => {
+  // 絞り込むと画面を作り直すので、data-key の付いた要素のフォーカスと、data-scroll の付いた列の横の位置を引き継ぐ
+  const update = (patch: Partial<Filter>) => {
     state.filter = { ...state.filter, ...patch };
-    const active = document.activeElement as HTMLInputElement | null;
-    const caret = active?.selectionStart ?? null;
+    const active = document.activeElement as HTMLElement | null;
+    const key = active?.dataset.key;
+    const caret = active instanceof HTMLInputElement ? active.selectionStart : null;
+    const scrolls = [...document.querySelectorAll<HTMLElement>("[data-scroll]")].map((e) => [e.dataset.scroll, e.scrollLeft] as const);
     render(state);
-    if (keepFocus) {
-      const input = document.querySelector<HTMLInputElement>("#search");
-      input?.focus();
-      if (input && caret !== null) input.setSelectionRange(caret, caret);
+    for (const [name, left] of scrolls) {
+      const row = document.querySelector<HTMLElement>(`[data-scroll="${name}"]`);
+      if (row) row.scrollLeft = left;
     }
+    const next = key ? document.querySelector<HTMLElement>(`[data-key="${key}"]`) : null;
+    next?.focus({ preventScroll: true });
+    if (next instanceof HTMLInputElement && caret !== null) next.setSelectionRange(caret, caret);
   };
 
   // 絞り込んだ一覧が見えるところまで送る（スマートフォンでは地図や文字の見本帳の下に隠れるため）
@@ -233,7 +239,7 @@ function renderHome(state: State, root: HTMLElement) {
   const glyphLang: Record<string, string> = { Hani: "zh", Jpan: "ja", Kore: "ko" };
   const tiles = h(
     "div",
-    { class: "script-tiles" },
+    { class: "script-tiles", "data-scroll": "scripts" },
     ...scripts
       .map(([script, text]) => ({ script, text, languages: data.languages.filter((l) => l.script === script) }))
       .sort((a, b) => b.languages.length - a.languages.length || a.text.localeCompare(b.text, locale))
@@ -248,6 +254,7 @@ function renderHome(state: State, root: HTMLElement) {
             class: "script-tile",
             type: "button",
             "aria-pressed": String(pressed),
+            "data-key": `script:${script}`,
             "aria-label": title,
             title,
             style: `--hl: var(--area-${dominantArea(languages, AREA_ORDER)})`,
@@ -277,15 +284,22 @@ function renderHome(state: State, root: HTMLElement) {
     placeholder: t(locale, "search"),
     "aria-label": t(locale, "search"),
     value: state.filter.query,
+    "data-key": "search",
   });
-  search.addEventListener("input", () => update({ query: search.value }, true));
+  search.addEventListener("input", () => update({ query: search.value }));
 
   const areas = h(
     "div",
-    { class: "chips", role: "group" },
-    chip(t(locale, "all"), !state.filter.area, () => update({ area: null })),
+    { class: "chips", role: "group", "data-scroll": "areas" },
+    chip(t(locale, "all"), !state.filter.area, () => update({ area: null }), undefined, "area:all"),
     ...AREA_ORDER.map((area) =>
-      chip(label(AREAS, area, locale), state.filter.area === area, () => update({ area: state.filter.area === area ? null : area }), `var(--area-${area})`),
+      chip(
+        label(AREAS, area, locale),
+        state.filter.area === area,
+        () => update({ area: state.filter.area === area ? null : area }),
+        `var(--area-${area})`,
+        `area:${area}`,
+      ),
     ),
   );
 
@@ -297,8 +311,8 @@ function renderHome(state: State, root: HTMLElement) {
     h(
       "div",
       { class: "selects" },
-      select(families, state.filter.family, t(locale, "allFamilies"), (v) => update({ family: v })),
-      select(scripts, state.filter.script, t(locale, "allScripts"), (v) => update({ script: v })),
+      select(families, state.filter.family, t(locale, "allFamilies"), "family", (v) => update({ family: v })),
+      select(scripts, state.filter.script, t(locale, "allScripts"), "script", (v) => update({ script: v })),
     ),
   );
 
@@ -336,10 +350,7 @@ function renderHome(state: State, root: HTMLElement) {
     );
   }
 
-  // 作り直すと横に送った見本帳が先頭に戻るので、前の位置を引き継ぐ
-  const tilesLeft = root.querySelector(".script-tiles")?.scrollLeft ?? 0;
   root.replaceChildren(hero, scriptBook, controls, status, list);
-  tiles.scrollLeft = tilesLeft;
 }
 
 // ---- 言語のページ ----
