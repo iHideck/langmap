@@ -471,14 +471,11 @@ select {
   background: var(--hl);
 }
 
+/* 地域の色の上の字は読みにくい色があるので、選んだチップは --ink で塗り、地域の色は丸に残す */
 .chip.active {
-  background: var(--hl);
-  border-color: var(--hl);
+  background: var(--ink);
+  border-color: var(--ink);
   color: var(--bg);
-}
-
-.chip.active::before {
-  background: var(--bg);
 }
 
 a.chip:hover {
