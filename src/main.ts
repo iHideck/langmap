@@ -198,6 +198,7 @@ function renderHome(state: State, root: HTMLElement) {
     },
     color: (code) => `var(--area-${dominantArea(shown.get(code) ?? [], AREA_ORDER)})`,
     title: (code) => `${countryName(state, code) ?? code} — ${t(locale, "count", { n: shown.get(code)?.length ?? 0 })}`,
+    countryName: (code) => countryName(state, code),
     selected: state.filter.country,
     onSelect: (code) => {
       update({ country: state.filter.country === code ? null : code });

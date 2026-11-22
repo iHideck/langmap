@@ -13,6 +13,7 @@ https://ihideck.github.io/langmap/
 - 名前（日本語・英語・コード）・地域・語族・文字で絞り込む
 - 言語のページで、話されている国・地域を大きな地図で示し、地域・文字・語族・見分け方のコツ・本文の例・同じ国や同じ語族の言語を出す
 - 国の一部だけで話される言語（バスク語・広東語・インドの各州の言語など）は、その地域だけを塗る。小さくて見えない所（香港・マルタなど）には、丸い印を付ける
+- 地図に国名を載せる。字が国に収まり、ほかの国名と重ならないものだけを出し、拡大するほど小さな国の名前も出る
 - 日本語と英語、ライトとダークに対応する
 
 ## データ
@@ -56,6 +57,7 @@ langmap shows 274 languages from languessr on maps of where they are spoken.
 - World map shaded by the number of languages per country; tap a country to list its languages.
 - Cards grouped by area, each with a small map. Filter by name, area, family and script.
 - Each language page has a large map, region, script, family, recognition tips, sample text from Wikipedia (CC BY-SA 4.0) and related languages.
+- Maps show country names that fit inside the country without overlapping; zooming in reveals smaller countries.
 - Languages spoken in only part of a country (Basque, Cantonese, Indian state languages…) shade just that region. Tiny places get a ring marker.
 - Country boundaries come from [iHideck/geojson](https://github.com/iHideck/geojson), pinned by tag and sha256 in `boundaries.json`. Subdivisions come from Natural Earth via languessr. Boundaries have no legal status.
 - Develop with `make setup`, `make dev`, `make check`. Code is MIT licensed.
