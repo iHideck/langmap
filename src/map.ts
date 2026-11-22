@@ -1,7 +1,8 @@
 // 地図を描く。一覧の小さな地図は canvas、言語のページと世界地図は SVG
 import { geoGraticule10, geoPath, type GeoPermissibleObjects, type GeoProjection } from "d3-geo";
 import type { Feature, Geometry } from "geojson";
-import { featuresFor, projectionFor, viewOf, worldProjection, type Atlas, type View } from "./geo";
+import { anchorOf, placeLabels, type LabelAnchor, type Rect } from "./countryLabels";
+import { featuresFor, projectionFor, viewOf, worldProjection, type Atlas, type Place, type View } from "./geo";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 /** 塗っても見えないほど小さい所（画面の面積が、この px² より小さい）には、丸い印を付ける */
@@ -108,6 +109,52 @@ function pathEl(d: string | null, cls: string, title?: string): SVGPathElement |
   return p;
 }
 
+/** 国名の字の大きさ（画面の px） */
+const LABEL_PX = 11;
+
+interface LabelLayer {
+  group: SVGGElement;
+  /** 見えている範囲（地図の座標）に合わせて、出す国名を選び直す */
+  relayout: (view: Rect) => void;
+}
+
+/** 国名の層。字の大きさが画面の上で変わらないよう、地図の大きさと拡大の度合いから字の大きさを決める */
+function labelLayer(svg: SVGSVGElement, anchors: LabelAnchor[], initial: Rect): LabelLayer {
+  const group = el("g", { class: "country-labels", "aria-hidden": "true" });
+  let view = initial;
+  const relayout = (next: Rect) => {
+    view = next;
+    const width = svg.clientWidth;
+    if (!width) return;
+    const size = (LABEL_PX * view.w) / width;
+    group.setAttribute("font-size", size.toFixed(3));
+    group.setAttribute("stroke-width", (size * 0.3).toFixed(3));
+    group.replaceChildren(
+      ...placeLabels(anchors, size, view).map((a) => {
+        const text = el("text", { x: a.x.toFixed(1), y: a.y.toFixed(1) });
+        text.textContent = a.text;
+        return text;
+      }),
+    );
+  };
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => relayout(view)).observe(svg);
+  return { group, relayout };
+}
+
+function anchorsFor(
+  projection: GeoProjection,
+  countries: Iterable<[string, Place]>,
+  name: (code: string) => string | undefined,
+): LabelAnchor[] {
+  const out: LabelAnchor[] = [];
+  for (const [code, place] of countries) {
+    if (code === "AQ") continue;
+    const a = anchorOf(projection, code, name(code) ?? place.nameEn, place.feature);
+    if (a) out.push(a);
+  }
+  return out;
+}
+
 export interface DetailOptions {
   label: string;
   color: string;
@@ -158,9 +205,11 @@ export function detailMap(atlas: Atlas, world: Atlas, codes: string[], options: 
   svg.append(hl);
   const marks = smallMarks(projection, highlight.features).map(([x, y]) => el("circle", { cx: x, cy: y, r: 9, class: "mark" }));
   svg.append(...marks);
+  const labels = labelLayer(svg, anchorsFor(projection, atlas.countries, options.countryName), { x: 0, y: 0, w: width, h: height });
+  svg.append(labels.group);
 
   if (highlight.view.span <= 150) frame.append(locator(world, highlight));
-  frame.append(zoomControls(svg, marks, { width, height }, options));
+  frame.append(zoomControls(svg, marks, labels, { width, height }, options));
   return frame;
 }
 
@@ -178,6 +227,7 @@ const MIN_ZOOM = 1 / 3;
 function zoomControls(
   svg: SVGSVGElement,
   marks: SVGCircleElement[],
+  labels: LabelLayer,
   size: { width: number; height: number },
   options: DetailOptions,
 ): HTMLDivElement {
@@ -190,6 +240,7 @@ function zoomControls(
     svg.setAttribute("viewBox", `${box.x} ${box.y} ${box.w} ${box.h}`);
     const r = (9 * box.w) / size.width;
     for (const m of marks) m.setAttribute("r", r.toFixed(3));
+    labels.relayout(box);
   };
   const schedule = () => {
     if (!frame) frame = requestAnimationFrame(apply);
@@ -326,6 +377,8 @@ export interface WorldOptions {
   /** 塗りの色（CSS の色。例: "var(--area-europe)"）。intensity が 0 より大きい国だけに使う */
   color: (code: string) => string;
   title: (code: string) => string;
+  /** 地図に載せる国名 */
+  countryName: (code: string) => string | undefined;
   selected: string | null;
   onSelect: (code: string) => void;
 }
@@ -373,5 +426,7 @@ export function worldMap(atlas: Atlas, options: WorldOptions): SVGSVGElement {
     g.append(p);
   }
   svg.append(g);
+  const labels = labelLayer(svg, anchorsFor(projection, atlas.countries, options.countryName), { x: 0, y: 0, w: width, h: height });
+  svg.append(labels.group);
   return svg;
 }

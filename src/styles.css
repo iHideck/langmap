@@ -1097,3 +1097,17 @@ a.chip:hover {
     transition: none !important;
   }
 }
+
+/* 国名。押す・動かすのは下の国に任せる */
+.country-labels {
+  fill: var(--ink);
+  stroke: var(--surface);
+  stroke-linejoin: round;
+  paint-order: stroke;
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
